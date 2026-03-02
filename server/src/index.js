@@ -15,6 +15,7 @@ import { tenantContext } from './middleware/tenantContext.js';
 import authRoutes from './routes/auth.routes.js';
 import tenantRoutes from './routes/tenant.routes.js';
 import crmRoutes from './routes/crm.routes.js';
+import aiConfigRoutes from './routes/aiConfig.routes.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -62,6 +63,7 @@ app.get('/api', (_req, res) => {
       tenants: '/api/tenants/*',
       conversations: '/api/conversations/*',
       credentials: '/api/credentials/*',
+      aiConfig: '/api/ai-config/*',
     },
   });
 });
@@ -70,6 +72,7 @@ app.get('/api', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/tenants', authenticate, authorize('super_admin'), tenantRoutes);
 app.use('/api/credentials', authenticate, tenantContext, crmRoutes);
+app.use('/api/ai-config', authenticate, tenantContext, aiConfigRoutes);
 // TODO: Mount as they are built
 // app.use('/api/conversations', authenticate, tenantContext, chatRoutes);
 

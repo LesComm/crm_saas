@@ -135,17 +135,19 @@ Voir `.env.example` pour la liste complete. Cles importantes:
 - [x] Bootstrap Express + Socket.io (index.js)
 - [x] Init git + push GitHub (commit ba32cc0, branche main)
 
-### Phase 2: API Auth + Tenant (A VENIR)
-- [ ] Routes auth (register, login, refresh)
-- [ ] Routes tenant CRUD
-- [ ] Routes CRM credentials
+### Phase 2: API Auth + Tenant (COMPLETE)
+- [x] Repositories (tenant, user, crm, refreshToken)
+- [x] Services (auth, tenant, crm)
+- [x] Controllers + Routes (auth, tenant, crm)
+- [x] Wired into index.js
 - [ ] Tests
 
-### Phase 3: Perfex Integration (A VENIR)
-- [ ] perfexClient generique
-- [ ] perfexModules (catalogue outils)
-- [ ] configAgent (generation JSON)
-- [ ] toolExecutor (execution outils)
+### Phase 3: Perfex Integration (COMPLETE)
+- [x] perfexClient.js (client HTTP generique)
+- [x] perfexModules.js (catalogue 59 outils, 9 modules)
+- [x] configAgent.service.js (generation JSON config tenant)
+- [x] toolExecutor.service.js (execution outils IA)
+- [x] aiConfig.repo.js + controller + routes
 
 ### Phase 4: Chat IA (A VENIR)
 - [ ] Ollama service
