@@ -123,7 +123,7 @@ Voir `.env.example` pour la liste complete. Cles importantes:
 
 ## Etat d'avancement
 
-### Phase 1: Fondations (EN COURS)
+### Phase 1: Fondations (COMPLETE)
 - [x] Structure de dossiers
 - [x] CLAUDE.md
 - [x] docker-compose.yml
@@ -133,7 +133,7 @@ Voir `.env.example` pour la liste complete. Cles importantes:
 - [x] Shared (constants.js, errors.js, validators.js)
 - [x] Middleware (auth, tenantContext, errorHandler, validation, rateLimiter)
 - [x] Bootstrap Express + Socket.io (index.js)
-- [ ] Init git + push GitHub (gh auth en attente)
+- [x] Init git + push GitHub (commit ba32cc0, branche main)
 
 ### Phase 2: API Auth + Tenant (A VENIR)
 - [ ] Routes auth (register, login, refresh)

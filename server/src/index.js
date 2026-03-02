@@ -10,6 +10,11 @@ import cors from 'cors';
 import { env } from './config/env.js';
 import { testConnection } from './config/database.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { authenticate, authorize } from './middleware/auth.js';
+import { tenantContext } from './middleware/tenantContext.js';
+import authRoutes from './routes/auth.routes.js';
+import tenantRoutes from './routes/tenant.routes.js';
+import crmRoutes from './routes/crm.routes.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -61,11 +66,12 @@ app.get('/api', (_req, res) => {
   });
 });
 
-// TODO: Mount route modules here as they are built
-// app.use('/api/auth', authRoutes);
-// app.use('/api/tenants', authenticate, authorize('super_admin'), tenantRoutes);
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/tenants', authenticate, authorize('super_admin'), tenantRoutes);
+app.use('/api/credentials', authenticate, tenantContext, crmRoutes);
+// TODO: Mount as they are built
 // app.use('/api/conversations', authenticate, tenantContext, chatRoutes);
-// app.use('/api/credentials', authenticate, tenantContext, crmRoutes);
 
 // 404 handler
 app.use((_req, res) => {
