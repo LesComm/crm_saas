@@ -149,11 +149,13 @@ Voir `.env.example` pour la liste complete. Cles importantes:
 - [x] toolExecutor.service.js (execution outils IA)
 - [x] aiConfig.repo.js + controller + routes
 
-### Phase 4: Chat IA (A VENIR)
-- [ ] Ollama service
-- [ ] promptBuilder
-- [ ] Socket.io chat handler
-- [ ] Persistence conversations
+### Phase 4: Chat IA (COMPLETE)
+- [x] ollama.service.js (client HTTP, streaming, health check)
+- [x] promptBuilder.service.js (system prompt, context management)
+- [x] conversation.repo.js + message.repo.js
+- [x] chat.service.js (orchestration: msg → Ollama → tool? → response)
+- [x] Socket.io chatHandler.js (events: send, history, list, archive)
+- [x] chat.routes.js (REST: GET/POST /api/conversations)
 
 ### Phase 5: Voice (A VENIR)
 - [ ] STT (Web Speech API + Whisper)

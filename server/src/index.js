@@ -16,6 +16,8 @@ import authRoutes from './routes/auth.routes.js';
 import tenantRoutes from './routes/tenant.routes.js';
 import crmRoutes from './routes/crm.routes.js';
 import aiConfigRoutes from './routes/aiConfig.routes.js';
+import chatRoutes from './routes/chat.routes.js';
+import { initSocket } from './socket/index.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -73,8 +75,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tenants', authenticate, authorize('super_admin'), tenantRoutes);
 app.use('/api/credentials', authenticate, tenantContext, crmRoutes);
 app.use('/api/ai-config', authenticate, tenantContext, aiConfigRoutes);
-// TODO: Mount as they are built
-// app.use('/api/conversations', authenticate, tenantContext, chatRoutes);
+app.use('/api/conversations', authenticate, tenantContext, chatRoutes);
 
 // 404 handler
 app.use((_req, res) => {
@@ -88,18 +89,8 @@ app.use((_req, res) => {
 // Centralized error handler
 app.use(errorHandler);
 
-// Socket.io connection handling
-io.on('connection', (socket) => {
-  console.log(`Socket connected: ${socket.id}`);
-
-  socket.on('disconnect', (reason) => {
-    console.log(`Socket disconnected: ${socket.id} (${reason})`);
-  });
-
-  // TODO: Wire up chat and voice handlers
-  // chatHandler(io, socket);
-  // voiceHandler(io, socket);
-});
+// Socket.io with JWT auth + chat handlers
+initSocket(io);
 
 // Start server
 async function start() {
