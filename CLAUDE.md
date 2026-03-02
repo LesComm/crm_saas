@@ -162,11 +162,19 @@ Voir `.env.example` pour la liste complete. Cles importantes:
 - [x] stt.service.js (Whisper via Ollama, fallback browser Web Speech API)
 - [x] voiceHandler.js (Socket.io: voice:send, voice:transcribe, audio streaming)
 
-### Phase 6: Frontend React (A VENIR)
-- [ ] Auth pages
-- [ ] Chat page
-- [ ] Settings page
-- [ ] Admin page
+### Phase 6: Frontend React (COMPLETE)
+- [x] Vite + Tailwind CSS + PostCSS config
+- [x] index.html + index.css (Tailwind directives + voice-pulse animation)
+- [x] config/api.js (Axios + JWT interceptor + auto-refresh 401)
+- [x] AuthContext.jsx (login, register, logout, localStorage)
+- [x] SocketContext.jsx (auto-connect/disconnect sur auth)
+- [x] useChat.js (Socket.io events, conversations CRUD, optimistic updates)
+- [x] useVoice.js (MediaRecorder, states idle→recording→processing→speaking)
+- [x] Composants UI: Spinner
+- [x] Composants chat: MessageList, ChatInput, VoiceButton, ToolCallCard
+- [x] Composants layout: Sidebar, Header
+- [x] Pages: Login, Chat, Settings
+- [x] main.jsx + App.jsx (providers: QueryClient, Auth, Socket)
 
 ## Fichiers de contexte (experts)
 
