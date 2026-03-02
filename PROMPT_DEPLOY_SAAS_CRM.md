@@ -226,9 +226,9 @@ echo "ENCRYPTION_KEY genere: ${ENCRYPTION_KEY:0:20}..."
 cat > .env << EOF
 # ── PostgreSQL ──────────────────────────────
 DB_HOST=localhost
-DB_PORT=5432
+DB_PORT=5434
 DB_USER=saas_prod
-DB_PASSWORD=DEMANDE_MOI_LE_MOT_DE_PASSE
+DB_PASSWORD=DXTezlKModYLtLaoAEdlahqo
 DB_NAME=saas_crm
 
 # ── JWT ─────────────────────────────────────
