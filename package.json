@@ -1,0 +1,16 @@
+{
+  "name": "saas-conversational-crm",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SaaS Conversational CRM - Perfex CRM via AI chat (text + voice)",
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "docker compose up -d",
+    "dev:logs": "docker compose logs -f backend",
+    "dev:down": "docker compose down",
+    "migrate": "docker compose exec backend node migrations/migrate.js"
+  }
+}
