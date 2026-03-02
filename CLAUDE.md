@@ -157,10 +157,10 @@ Voir `.env.example` pour la liste complete. Cles importantes:
 - [x] Socket.io chatHandler.js (events: send, history, list, archive)
 - [x] chat.routes.js (REST: GET/POST /api/conversations)
 
-### Phase 5: Voice (A VENIR)
-- [ ] STT (Web Speech API + Whisper)
-- [ ] TTS (ElevenLabs streaming)
-- [ ] Socket.io voice handler
+### Phase 5: Voice (COMPLETE)
+- [x] tts.service.js (ElevenLabs streaming audio chunks)
+- [x] stt.service.js (Whisper via Ollama, fallback browser Web Speech API)
+- [x] voiceHandler.js (Socket.io: voice:send, voice:transcribe, audio streaming)
 
 ### Phase 6: Frontend React (A VENIR)
 - [ ] Auth pages

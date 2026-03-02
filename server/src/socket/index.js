@@ -5,6 +5,7 @@
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
 import { chatHandler } from './chatHandler.js';
+import { voiceHandler } from './voiceHandler.js';
 
 /**
  * Initialize Socket.io with JWT auth and event handlers
@@ -36,8 +37,9 @@ export function initSocket(io) {
     // Join tenant room for potential broadcasts
     socket.join(`tenant:${socket.tenantId}`);
 
-    // Wire up chat handlers
+    // Wire up chat and voice handlers
     chatHandler(io, socket);
+    voiceHandler(io, socket);
 
     socket.on('disconnect', (reason) => {
       console.log(`Socket disconnected: ${socket.id} (${reason})`);
