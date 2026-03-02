@@ -176,6 +176,27 @@ Voir `.env.example` pour la liste complete. Cles importantes:
 - [x] Pages: Login, Chat, Settings
 - [x] main.jsx + App.jsx (providers: QueryClient, Auth, Socket)
 
+### Phase 7: Tests + Admin + Deploiement (COMPLETE)
+- [x] Tests unitaires: auth.service, tenant.service, crm.service, chat.service (Jest + mocks)
+- [x] Page Admin: gestion tenants (super_admin) + gestion users (tenant_admin)
+- [x] Routes API /api/users (CRUD, tenant_admin+) + /api/tenants/:id/users (super_admin)
+- [x] Scripts deploiement serveur Plesk: server-setup.sh, deploy-backend.sh, push.sh
+- [x] Config Nginx reverse proxy (deploy/nginx-saas-crm.conf)
+- [x] .env.production template
+
+### Architecture de deploiement
+```
+Serveur Plesk (lescommunicateurs.ca)
+├── Ollama (Llama 3 8B) — port 11434 (local)
+├── PostgreSQL 16 — port 5432 (local)
+├── Backend Node.js (PM2) — port 3000
+└── Nginx reverse proxy → crm-api.lescommunicateurs.ca
+
+Machine dev (Windows)
+└── Frontend React (Vite) — port 5173
+    └── proxy → serveur:3000
+```
+
 ## Fichiers de contexte (experts)
 
 - `backend_security_expert.md` - Zero Trust, isolation multi-tenant, encryption

@@ -17,6 +17,7 @@ import tenantRoutes from './routes/tenant.routes.js';
 import crmRoutes from './routes/crm.routes.js';
 import aiConfigRoutes from './routes/aiConfig.routes.js';
 import chatRoutes from './routes/chat.routes.js';
+import userRoutes from './routes/user.routes.js';
 import { initSocket } from './socket/index.js';
 
 const app = express();
@@ -66,6 +67,7 @@ app.get('/api', (_req, res) => {
       conversations: '/api/conversations/*',
       credentials: '/api/credentials/*',
       aiConfig: '/api/ai-config/*',
+      users: '/api/users/*',
     },
   });
 });
@@ -76,6 +78,9 @@ app.use('/api/tenants', authenticate, authorize('super_admin'), tenantRoutes);
 app.use('/api/credentials', authenticate, tenantContext, crmRoutes);
 app.use('/api/ai-config', authenticate, tenantContext, aiConfigRoutes);
 app.use('/api/conversations', authenticate, tenantContext, chatRoutes);
+app.use('/api/users', authenticate, tenantContext, authorize('tenant_admin', 'super_admin'), userRoutes);
+// Super admin: manage users of any tenant
+app.use('/api/tenants/:tenantId/users', authenticate, authorize('super_admin'), userRoutes);
 
 // 404 handler
 app.use((_req, res) => {

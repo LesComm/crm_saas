@@ -32,6 +32,14 @@ export function Header({ onToggleSidebar, onNavigate }) {
       </div>
 
       <div className="flex items-center gap-3">
+        {(user?.role === 'super_admin' || user?.role === 'tenant_admin') && (
+          <button
+            onClick={() => onNavigate?.('admin')}
+            className="text-gray-500 hover:text-gray-700 text-sm"
+          >
+            Admin
+          </button>
+        )}
         <button
           onClick={() => onNavigate?.('settings')}
           className="text-gray-500 hover:text-gray-700 text-sm"

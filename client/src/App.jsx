@@ -9,6 +9,7 @@ import { SocketProvider } from './contexts/SocketContext.jsx';
 import { Login } from './pages/Login.jsx';
 import { Chat } from './pages/Chat.jsx';
 import { Settings } from './pages/Settings.jsx';
+import { Admin } from './pages/Admin.jsx';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,6 +38,10 @@ function AppRoutes() {
 
   if (page === 'settings') {
     return <Settings onBack={() => setPage('chat')} />;
+  }
+
+  if (page === 'admin') {
+    return <Admin onBack={() => setPage('chat')} />;
   }
 
   return <Chat onNavigate={setPage} />;

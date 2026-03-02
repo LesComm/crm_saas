@@ -6,10 +6,15 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api': 'http://localhost:3000',
+      // Backend distant: VITE_BACKEND_URL=https://crm-api.lescommunicateurs.ca npm run dev
+      '/api': {
+        target: process.env.VITE_BACKEND_URL || 'http://localhost:3000',
+        changeOrigin: true,
+      },
       '/socket.io': {
-        target: 'http://localhost:3000',
+        target: process.env.VITE_BACKEND_URL || 'http://localhost:3000',
         ws: true,
+        changeOrigin: true,
       },
     },
   },
