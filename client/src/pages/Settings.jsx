@@ -1,16 +1,31 @@
 /**
  * Settings page - CRM connection management
+ * Supports two modes: API REST (HTTP) and MySQL direct database access
  */
 
 import { useState, useEffect } from 'react';
 import api from '../config/api.js';
 import { Spinner } from '../components/ui/Spinner.jsx';
 
+const DEFAULT_FORM = {
+  label: 'Production',
+  connectionMode: 'mysql',
+  // API mode
+  baseUrl: '',
+  apiToken: '',
+  // MySQL mode
+  mysqlHost: '',
+  mysqlPort: '3306',
+  mysqlUser: '',
+  mysqlPassword: '',
+  mysqlDatabase: '',
+};
+
 export function Settings({ onBack }) {
   const [credentials, setCredentials] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ label: 'Production', baseUrl: '', apiToken: '' });
+  const [form, setForm] = useState({ ...DEFAULT_FORM });
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(null);
   const [error, setError] = useState('');
@@ -35,7 +50,7 @@ export function Settings({ onBack }) {
     try {
       await api.post('/credentials', form);
       setShowForm(false);
-      setForm({ label: 'Production', baseUrl: '', apiToken: '' });
+      setForm({ ...DEFAULT_FORM });
       await loadCredentials();
     } catch (err) {
       setError(err.response?.data?.error || err.message);
@@ -77,6 +92,8 @@ export function Settings({ onBack }) {
     }
   };
 
+  const isApiMode = form.connectionMode === 'api';
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-2xl mx-auto p-6">
@@ -115,21 +132,95 @@ export function Settings({ onBack }) {
                 onChange={(e) => setForm({ ...form, label: e.target.value })}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
               />
-              <input
-                placeholder="URL Perfex CRM (https://crm.example.com)"
-                value={form.baseUrl}
-                onChange={(e) => setForm({ ...form, baseUrl: e.target.value })}
-                required
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-              />
-              <input
-                placeholder="API Token"
-                value={form.apiToken}
-                onChange={(e) => setForm({ ...form, apiToken: e.target.value })}
-                required
-                type="password"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-              />
+
+              {/* Mode selector */}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, connectionMode: 'mysql' })}
+                  className={`flex-1 text-sm py-2 rounded-lg border transition ${
+                    !isApiMode
+                      ? 'bg-primary-600 text-white border-primary-600'
+                      : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  Base de donnees MySQL
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, connectionMode: 'api' })}
+                  className={`flex-1 text-sm py-2 rounded-lg border transition ${
+                    isApiMode
+                      ? 'bg-primary-600 text-white border-primary-600'
+                      : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  API REST
+                </button>
+              </div>
+
+              {isApiMode ? (
+                <>
+                  <input
+                    placeholder="URL Perfex CRM (https://crm.example.com)"
+                    value={form.baseUrl}
+                    onChange={(e) => setForm({ ...form, baseUrl: e.target.value })}
+                    required
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  />
+                  <input
+                    placeholder="API Token (authtoken)"
+                    value={form.apiToken}
+                    onChange={(e) => setForm({ ...form, apiToken: e.target.value })}
+                    required
+                    type="password"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  />
+                </>
+              ) : (
+                <>
+                  <div className="grid grid-cols-3 gap-2">
+                    <input
+                      placeholder="Hote MySQL"
+                      value={form.mysqlHost}
+                      onChange={(e) => setForm({ ...form, mysqlHost: e.target.value })}
+                      required
+                      className="col-span-2 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    />
+                    <input
+                      placeholder="Port"
+                      value={form.mysqlPort}
+                      onChange={(e) => setForm({ ...form, mysqlPort: e.target.value })}
+                      className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      placeholder="Utilisateur MySQL"
+                      value={form.mysqlUser}
+                      onChange={(e) => setForm({ ...form, mysqlUser: e.target.value })}
+                      required
+                      className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    />
+                    <input
+                      placeholder="Mot de passe"
+                      value={form.mysqlPassword}
+                      onChange={(e) => setForm({ ...form, mysqlPassword: e.target.value })}
+                      required
+                      type="password"
+                      className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <input
+                    placeholder="Base de donnees (ex: admin_gestioncrm)"
+                    value={form.mysqlDatabase}
+                    onChange={(e) => setForm({ ...form, mysqlDatabase: e.target.value })}
+                    required
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  />
+                </>
+              )}
+
               <button
                 type="submit"
                 disabled={saving}
@@ -151,16 +242,29 @@ export function Settings({ onBack }) {
                 <div key={cred.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div>
                     <p className="font-medium text-sm text-gray-800">{cred.label}</p>
-                    <p className="text-xs text-gray-500">{cred.base_url}</p>
-                    <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full ${
-                      cred.connection_status === 'connected'
-                        ? 'bg-green-100 text-green-700'
-                        : cred.connection_status === 'failed'
-                        ? 'bg-red-100 text-red-700'
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {cred.connection_status}
-                    </span>
+                    <p className="text-xs text-gray-500">
+                      {cred.connection_mode === 'mysql'
+                        ? `MySQL: ${cred.mysql_user}@${cred.mysql_host}:${cred.mysql_port}/${cred.mysql_database}`
+                        : cred.base_url}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        cred.connection_mode === 'mysql'
+                          ? 'bg-purple-100 text-purple-700'
+                          : 'bg-blue-100 text-blue-700'
+                      }`}>
+                        {cred.connection_mode === 'mysql' ? 'MySQL' : 'API'}
+                      </span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        cred.connection_status === 'connected'
+                          ? 'bg-green-100 text-green-700'
+                          : cred.connection_status === 'failed'
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {cred.connection_status}
+                      </span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <button

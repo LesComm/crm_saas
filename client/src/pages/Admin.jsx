@@ -192,6 +192,7 @@ export function Admin({ onBack }) {
       setError(err.response?.data?.error || err.message);
     } finally {
       setLoadingUsers(false);
+      setLoading(false);
     }
   };
 

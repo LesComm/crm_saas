@@ -10,6 +10,7 @@
  */
 
 import { PerfexClient } from '../../perfex/perfexClient.js';
+import { PerfexMysqlClient } from '../../perfex/perfexMysqlClient.js';
 import { getToolsForModules, getToolDefinitions } from '../../perfex/perfexModules.js';
 import * as crmRepo from '../../repositories/crm.repo.js';
 import * as aiConfigRepo from '../../repositories/aiConfig.repo.js';
@@ -35,19 +36,37 @@ export async function generateConfig(tenantId, credentialId, options = {}) {
     throw new NotFoundError('CRM credential');
   }
 
-  const apiToken = decrypt(
-    credential.api_token_encrypted,
-    credential.api_token_iv,
-    credential.api_token_tag
-  );
+  // 2. Build the appropriate client (API or MySQL)
+  let client;
+  if (credential.connection_mode === 'mysql') {
+    const mysqlPassword = decrypt(
+      credential.mysql_password_encrypted,
+      credential.mysql_password_iv,
+      credential.mysql_password_tag
+    );
+    client = new PerfexMysqlClient({
+      host: credential.mysql_host,
+      port: credential.mysql_port || 3306,
+      user: credential.mysql_user,
+      password: mysqlPassword,
+      database: credential.mysql_database,
+    });
+    logStep('connection_test', `Testing MySQL connection to ${credential.mysql_host}:${credential.mysql_port}/${credential.mysql_database}`);
+  } else {
+    const apiToken = decrypt(
+      credential.api_token_encrypted,
+      credential.api_token_iv,
+      credential.api_token_tag
+    );
+    client = new PerfexClient(credential.base_url, apiToken);
+    logStep('connection_test', `Testing API connection to ${credential.base_url}`);
+  }
 
-  // 2. Test connection
-  logStep('connection_test', `Testing connection to ${credential.base_url}`);
-  const client = new PerfexClient(credential.base_url, apiToken);
   const connected = await client.testConnection();
 
   if (!connected) {
-    throw new AppError('Cannot connect to CRM. Check credentials and URL.', 400, 'CRM_CONNECTION_FAILED');
+    if (client instanceof PerfexMysqlClient) await client.close().catch(() => {});
+    throw new AppError('Cannot connect to CRM. Check credentials.', 400, 'CRM_CONNECTION_FAILED');
   }
 
   // Update connection status
@@ -57,6 +76,7 @@ export async function generateConfig(tenantId, credentialId, options = {}) {
   // 3. Detect available modules
   logStep('module_detection', 'Detecting available Perfex modules');
   const detectedModules = await client.detectModules();
+  if (client instanceof PerfexMysqlClient) await client.close().catch(() => {});
   const enabledModules = Object.entries(detectedModules)
     .filter(([, v]) => v)
     .map(([k]) => k);

@@ -5,11 +5,12 @@
  * Flow:
  * 1. AI returns a tool_call (name + arguments)
  * 2. This service validates the call against the tenant's allowed tools
- * 3. Builds a PerfexClient with the tenant's decrypted credentials
+ * 3. Builds the appropriate client (HTTP or MySQL) from tenant credentials
  * 4. Executes the tool and returns the result
  */
 
 import { PerfexClient } from '../../perfex/perfexClient.js';
+import { PerfexMysqlClient } from '../../perfex/perfexMysqlClient.js';
 import { TOOLS_BY_NAME } from '../../perfex/perfexModules.js';
 import * as crmRepo from '../../repositories/crm.repo.js';
 import * as aiConfigRepo from '../../repositories/aiConfig.repo.js';
@@ -41,21 +42,20 @@ export async function executeTool(tenantId, toolName, args) {
     return { success: false, error: `Tool "${toolName}" is not enabled for this tenant` };
   }
 
-  // 3. Get and decrypt CRM credentials
+  // 3. Get CRM credentials and build the appropriate client
   const credential = await crmRepo.findById(config.credential_id, tenantId);
   if (!credential) {
     return { success: false, error: 'CRM credentials not found' };
   }
 
-  const apiToken = decrypt(
-    credential.api_token_encrypted,
-    credential.api_token_iv,
-    credential.api_token_tag
-  );
+  let client;
+  try {
+    client = _buildClient(credential);
+  } catch (err) {
+    return { success: false, error: `Failed to build CRM client: ${err.message}` };
+  }
 
   // 4. Execute the tool
-  const client = new PerfexClient(credential.base_url, apiToken);
-
   try {
     const result = await toolDef.execute(client, args || {});
     return { success: true, data: result };
@@ -64,7 +64,40 @@ export async function executeTool(tenantId, toolName, args) {
       success: false,
       error: `Tool execution failed: ${err.message}`,
     };
+  } finally {
+    // Close MySQL pool if it was created
+    if (client instanceof PerfexMysqlClient) {
+      await client.close().catch(() => {});
+    }
   }
+}
+
+/**
+ * Build the appropriate Perfex client based on connection mode
+ */
+function _buildClient(credential) {
+  if (credential.connection_mode === 'mysql') {
+    const mysqlPassword = decrypt(
+      credential.mysql_password_encrypted,
+      credential.mysql_password_iv,
+      credential.mysql_password_tag
+    );
+    return new PerfexMysqlClient({
+      host: credential.mysql_host,
+      port: credential.mysql_port || 3306,
+      user: credential.mysql_user,
+      password: mysqlPassword,
+      database: credential.mysql_database,
+    });
+  }
+
+  // Default: API mode
+  const apiToken = decrypt(
+    credential.api_token_encrypted,
+    credential.api_token_iv,
+    credential.api_token_tag
+  );
+  return new PerfexClient(credential.base_url, apiToken);
 }
 
 /**

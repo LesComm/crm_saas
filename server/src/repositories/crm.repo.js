@@ -22,13 +22,19 @@ export async function findPrimary(tenantId) {
 
 export async function findAllByTenant(tenantId) {
   const { rows } = await pool.query(
-    'SELECT id, tenant_id, label, crm_type, base_url, connection_status, last_tested_at, is_primary, created_at FROM crm_credentials WHERE tenant_id = $1 ORDER BY created_at DESC',
+    'SELECT id, tenant_id, label, crm_type, connection_mode, base_url, mysql_host, mysql_port, mysql_user, mysql_database, connection_status, last_tested_at, is_primary, created_at FROM crm_credentials WHERE tenant_id = $1 ORDER BY created_at DESC',
     [tenantId]
   );
   return rows;
 }
 
-export async function create({ tenantId, label, crmType, baseUrl, apiTokenEncrypted, apiTokenIv, apiTokenTag, isPrimary }) {
+export async function create({
+  tenantId, label, crmType, connectionMode, isPrimary,
+  // API mode fields
+  baseUrl, apiTokenEncrypted, apiTokenIv, apiTokenTag,
+  // MySQL mode fields
+  mysqlHost, mysqlPort, mysqlUser, mysqlPasswordEncrypted, mysqlPasswordIv, mysqlPasswordTag, mysqlDatabase,
+}) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -42,10 +48,19 @@ export async function create({ tenantId, label, crmType, baseUrl, apiTokenEncryp
     }
 
     const { rows } = await client.query(
-      `INSERT INTO crm_credentials (tenant_id, label, crm_type, base_url, api_token_encrypted, api_token_iv, api_token_tag, is_primary)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING id, tenant_id, label, crm_type, base_url, connection_status, is_primary, created_at`,
-      [tenantId, label, crmType, baseUrl, apiTokenEncrypted, apiTokenIv, apiTokenTag, isPrimary]
+      `INSERT INTO crm_credentials (
+        tenant_id, label, crm_type, connection_mode, is_primary,
+        base_url, api_token_encrypted, api_token_iv, api_token_tag,
+        mysql_host, mysql_port, mysql_user, mysql_password_encrypted, mysql_password_iv, mysql_password_tag, mysql_database
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+       RETURNING id, tenant_id, label, crm_type, connection_mode, base_url, mysql_host, mysql_port, mysql_user, mysql_database, connection_status, is_primary, created_at`,
+      [
+        tenantId, label, crmType, connectionMode || 'api', isPrimary,
+        baseUrl || null, apiTokenEncrypted || null, apiTokenIv || null, apiTokenTag || null,
+        mysqlHost || null, mysqlPort || 3306, mysqlUser || null,
+        mysqlPasswordEncrypted || null, mysqlPasswordIv || null, mysqlPasswordTag || null,
+        mysqlDatabase || null,
+      ]
     );
 
     await client.query('COMMIT');
