@@ -389,17 +389,44 @@ Cliquer "OK" pour sauvegarder.
 Dans **Directives nginx additionnelles**, coller:
 
 ```nginx
-# SPA: toutes les routes non-fichier redirigent vers index.html
+# Proxy API vers le backend Node.js (port 3000)
+location /api/ {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_read_timeout 120s;
+    proxy_send_timeout 120s;
+    client_max_body_size 10m;
+}
+
+# WebSocket (Socket.io) proxy
+location /socket.io/ {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+
+# SPA: toutes les autres routes redirigent vers index.html
 location / {
     try_files $uri $uri/ /index.html;
 }
 
-# Cache statique (JS, CSS, images)
+# Cache statique (JS, CSS, images, fonts)
 location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff2?)$ {
     expires 30d;
     add_header Cache-Control "public, immutable";
 }
 ```
+
+**IMPORTANT**: Le frontend a besoin du proxy `/api/` et `/socket.io/` pour communiquer avec le backend sur le meme domaine (pas de CORS).
 
 Cliquer "OK" pour sauvegarder.
 
