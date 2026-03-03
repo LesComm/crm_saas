@@ -47,13 +47,29 @@ export const createTenantSchema = z.object({
 });
 
 // CRM credential schemas
-export const createCredentialSchema = z.object({
+const credentialBase = {
   label: z.string().min(1).max(200).default('Production'),
   crmType: z.enum(['perfex']).default('perfex'),
-  baseUrl: z.string().url().max(500),
-  apiToken: z.string().min(1),
   isPrimary: z.boolean().default(true),
-});
+};
+
+export const createCredentialSchema = z.discriminatedUnion('connectionMode', [
+  z.object({
+    ...credentialBase,
+    connectionMode: z.literal('api'),
+    baseUrl: z.string().url().max(500),
+    apiToken: z.string().min(1),
+  }),
+  z.object({
+    ...credentialBase,
+    connectionMode: z.literal('mysql'),
+    mysqlHost: z.string().min(1).max(500),
+    mysqlPort: z.coerce.number().int().min(1).max(65535).default(3306),
+    mysqlUser: z.string().min(1).max(200),
+    mysqlPassword: z.string().min(1),
+    mysqlDatabase: z.string().min(1).max(200),
+  }),
+]);
 
 // Conversation schemas
 export const createConversationSchema = z.object({
