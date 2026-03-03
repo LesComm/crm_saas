@@ -28,7 +28,7 @@ const envSchema = z.object({
 
   // Ollama
   OLLAMA_BASE_URL: z.string().url().default('http://localhost:11434'),
-  OLLAMA_MODEL: z.string().default('llama3:8b-instruct-q4_K_M'),
+  OLLAMA_MODEL: z.string().default('llama3.1:8b'),
 
   // ElevenLabs (optional)
   ELEVENLABS_API_KEY: z.string().optional().default(''),
