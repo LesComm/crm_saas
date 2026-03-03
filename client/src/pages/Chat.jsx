@@ -11,7 +11,7 @@ import { VoiceButton } from '../components/chat/VoiceButton.jsx';
 import { useChat } from '../hooks/useChat.js';
 import { useVoice } from '../hooks/useVoice.js';
 
-export function Chat() {
+export function Chat({ onNavigate }) {
   const chat = useChat();
   const voice = useVoice();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -44,7 +44,7 @@ export function Chat() {
 
       {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0">
-        <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+        <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} onNavigate={onNavigate} />
 
         {/* Messages */}
         <MessageList messages={chat.messages} isThinking={chat.isThinking} />
