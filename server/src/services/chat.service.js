@@ -33,6 +33,9 @@ const MAX_TOOL_ROUNDS = 5; // Prevent infinite tool loops
  * @returns {Promise<object>} - { conversation, userMessage, assistantMessage, toolResults[] }
  */
 export async function processMessage({ tenantId, userId, conversationId, content, inputType = 'text' }) {
+  console.log(`[chat] processMessage start — tenant=${tenantId}, user=${userId}, conv=${conversationId || 'new'}`);
+  const t0 = Date.now();
+
   // 1. Get or create conversation
   let conversation;
   if (conversationId) {
@@ -47,6 +50,7 @@ export async function processMessage({ tenantId, userId, conversationId, content
       title: content.slice(0, 100),
     });
   }
+  console.log(`[chat] conversation ready (${Date.now() - t0}ms) — id=${conversation.id}`);
 
   // 2. Save user message
   const userMessage = await messageRepo.create({
@@ -57,6 +61,7 @@ export async function processMessage({ tenantId, userId, conversationId, content
     inputType,
   });
   await conversationRepo.incrementMessageCount(conversation.id, tenantId);
+  console.log(`[chat] user message saved (${Date.now() - t0}ms)`);
 
   // 3. Load context
   const [aiConfig, tenant, user, history] = await Promise.all([
@@ -65,6 +70,7 @@ export async function processMessage({ tenantId, userId, conversationId, content
     userRepo.findById(userId),
     messageRepo.findRecentByConversation(conversation.id, tenantId),
   ]);
+  console.log(`[chat] context loaded (${Date.now() - t0}ms) — aiConfig=${!!aiConfig}, tools=${aiConfig?.tool_definitions?.length || 0}`);
 
   const systemPrompt = buildSystemPrompt({
     tenant,
@@ -76,6 +82,7 @@ export async function processMessage({ tenantId, userId, conversationId, content
 
   // 4. Build messages for Ollama
   const messages = formatMessages(history, systemPrompt);
+  console.log(`[chat] calling Ollama (${Date.now() - t0}ms) — ${messages.length} messages, ${tools.length} tools`);
 
   // 5. Chat loop (handle tool calls)
   const toolResults = [];
@@ -84,10 +91,12 @@ export async function processMessage({ tenantId, userId, conversationId, content
   let totalTokensCompletion = 0;
 
   for (let round = 0; round < MAX_TOOL_ROUNDS + 1; round++) {
+    console.log(`[chat] Ollama round ${round} start (${Date.now() - t0}ms)`);
     const response = await ollama.chat({
       messages,
       tools: tools.length > 0 ? tools : undefined,
     });
+    console.log(`[chat] Ollama round ${round} done (${Date.now() - t0}ms) — tool_calls=${response.message?.tool_calls?.length || 0}`);
 
     totalTokensPrompt += response.tokens.prompt;
     totalTokensCompletion += response.tokens.completion;
@@ -118,7 +127,9 @@ export async function processMessage({ tenantId, userId, conversationId, content
         const toolName = toolCall.function?.name || toolCall.name;
         const toolArgs = toolCall.function?.arguments || toolCall.arguments || {};
 
+        console.log(`[chat] executing tool "${toolName}" (${Date.now() - t0}ms)`, JSON.stringify(toolArgs));
         const result = await toolExecutor.executeTool(tenantId, toolName, toolArgs);
+        console.log(`[chat] tool "${toolName}" done (${Date.now() - t0}ms) — success=${result?.success}`);
         const truncated = truncateToolResult(result);
 
         toolResults.push({
@@ -151,6 +162,7 @@ export async function processMessage({ tenantId, userId, conversationId, content
 
     // No tool calls - this is the final response
     finalResponse = assistantMsg.content || '';
+    console.log(`[chat] final response received (${Date.now() - t0}ms) — length=${finalResponse.length}`);
     break;
   }
 
