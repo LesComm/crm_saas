@@ -5,6 +5,8 @@
 
 import express from 'express';
 import { createServer } from 'node:http';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 import { Server as SocketServer } from 'socket.io';
 import cors from 'cors';
 import { env } from './config/env.js';
@@ -26,7 +28,9 @@ const httpServer = createServer(app);
 // Socket.io setup
 const io = new SocketServer(httpServer, {
   cors: {
-    origin: env.NODE_ENV === 'production' ? false : '*',
+    origin: env.NODE_ENV === 'production'
+      ? ['https://crm.lescommunicateurs.ca', 'https://crm-api.lescommunicateurs.ca']
+      : '*',
     methods: ['GET', 'POST'],
   },
 });
@@ -82,12 +86,22 @@ app.use('/api/users', authenticate, tenantContext, authorize('tenant_admin', 'su
 // Super admin: manage users of any tenant
 app.use('/api/tenants/:tenantId/users', authenticate, authorize('super_admin'), userRoutes);
 
-// 404 handler
-app.use((_req, res) => {
-  res.status(404).json({
-    success: false,
-    error: 'Route not found',
-    code: 'NOT_FOUND',
+// Serve client static files (production)
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const clientDist = path.join(__dirname, '../../client/dist');
+app.use(express.static(clientDist));
+
+// SPA fallback — serve index.html for non-API routes
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/') || req.path.startsWith('/socket.io')) {
+    return res.status(404).json({
+      success: false,
+      error: 'Route not found',
+      code: 'NOT_FOUND',
+    });
+  }
+  res.sendFile(path.join(clientDist, 'index.html'), (err) => {
+    if (err) next(err);
   });
 });
 

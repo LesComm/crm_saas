@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-# Deploiement backend SaaS CRM sur serveur Plesk
+# Deploiement SaaS CRM sur serveur Plesk
 #
 # Usage:
 #   1. Depuis ta machine: ./deploy/push.sh
@@ -10,30 +10,41 @@
 set -euo pipefail
 
 APP_DIR="/opt/saas-crm"
-ENV_FILE="$APP_DIR/.env"
+ENV_FILE="$APP_DIR/server/.env"
 
-echo "=== Deploiement SaaS CRM Backend ==="
+echo "=== Deploiement SaaS CRM ==="
 
-# ── 1. Installer les dependances ──────────────────────────
-echo "[1/4] Installation des dependances..."
-cd "$APP_DIR"
-npm install --omit=dev
+# ── 1. Installer les dependances backend ───────────────────
+echo "[1/5] Installation des dependances backend..."
+cd "$APP_DIR/server"
+npm install --omit=dev --silent
 
-# ── 2. Verifier le .env ──────────────────────────────────
+# ── 2. Build client (si pas de dist/) ─────────────────────
+if [ -d "$APP_DIR/client/dist" ]; then
+    echo "[2/5] Client pre-built OK"
+else
+    echo "[2/5] Build client..."
+    cd "$APP_DIR/client"
+    npm install --silent
+    npm run build
+fi
+
+# ── 3. Verifier le .env ───────────────────────────────────
+cd "$APP_DIR/server"
 if [ ! -f "$ENV_FILE" ]; then
     echo "ERREUR: $ENV_FILE n'existe pas!"
     echo "Copiez .env.example vers .env et configurez les valeurs."
     exit 1
 fi
-echo "[2/4] Fichier .env OK"
+echo "[3/5] Fichier .env OK"
 
-# ── 3. Lancer les migrations ─────────────────────────────
-echo "[3/4] Execution des migrations..."
+# ── 4. Lancer les migrations ──────────────────────────────
+echo "[4/5] Execution des migrations..."
 node migrations/migrate.js
 echo "  Migrations OK"
 
-# ── 4. Demarrer/redemarrer avec PM2 ──────────────────────
-echo "[4/4] Demarrage de l'application..."
+# ── 5. Demarrer/redemarrer avec PM2 ──────────────────────
+echo "[5/5] Demarrage de l'application..."
 
 if pm2 describe saas-crm > /dev/null 2>&1; then
     pm2 restart saas-crm
