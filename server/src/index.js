@@ -35,8 +35,17 @@ const io = new SocketServer(httpServer, {
   },
 });
 
-// Global middleware
-app.use(cors());
+// Global middleware — CORS for cross-origin frontend
+const corsOptions = {
+  origin: env.NODE_ENV === 'production'
+    ? ['https://crm.lescommunicateurs.ca', 'https://crm-api.lescommunicateurs.ca']
+    : true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json({ limit: '1mb' }));
 
 // Health check (no auth)
